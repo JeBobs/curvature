@@ -4,6 +4,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.ServicePriority;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -12,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CurvaturePlugin extends JavaPlugin {
-    private static final long DECAY_INTERVAL_SECONDS = 10;
+    private static final long DEFAULT_DECAY_INTERVAL_SECONDS = 10;
 
     private Connection conn;
     private StateManager stateManager;
@@ -20,6 +21,8 @@ public class CurvaturePlugin extends JavaPlugin {
     private final Map<String, Double> decayRatesPerSecond = new HashMap<>();
     private final Map<String, java.util.List<CurveBinding>> inputBindings = new HashMap<>();
     private double playtimeIncrementPerSecond = 1.0 / 60.0;
+    private long decayIntervalTicks = DEFAULT_DECAY_INTERVAL_SECONDS * 20;
+    private BukkitTask decayTask;
 
     @Override
     public void onEnable() {
@@ -42,13 +45,7 @@ public class CurvaturePlugin extends JavaPlugin {
         }
 
         getServer().getPluginManager().registerEvents(new PlayerListeners(this), this);
-        getServer().getScheduler()
-                .runTaskTimer(
-                        this,
-                        stateManager::decayAll,
-                        DECAY_INTERVAL_SECONDS * 20,
-                        DECAY_INTERVAL_SECONDS * 20
-                );
+        scheduleDecayTask();
         getServer().getScheduler()
                 .runTaskTimer(
                         this,
@@ -86,10 +83,17 @@ public class CurvaturePlugin extends JavaPlugin {
         if (stateManager != null) {
             stateManager.updateDecayRates(decayRatesPerSecond);
         }
+        scheduleDecayTask();
     }
 
     private void loadCurves() {
         playtimeIncrementPerSecond = getConfig().getDouble("playtimeTracking.incrementPerSecond", 1.0 / 60.0);
+        long intervalSeconds = getConfig().getLong("decay.intervalSeconds", DEFAULT_DECAY_INTERVAL_SECONDS);
+        if (intervalSeconds < 1) {
+            getLogger().warning("decay.intervalSeconds must be >= 1; using default " + DEFAULT_DECAY_INTERVAL_SECONDS);
+            intervalSeconds = DEFAULT_DECAY_INTERVAL_SECONDS;
+        }
+        decayIntervalTicks = intervalSeconds * 20;
         curves.clear();
         decayRatesPerSecond.clear();
         ConfigurationSection sec = getConfig().getConfigurationSection("curves");
@@ -214,6 +218,23 @@ public class CurvaturePlugin extends JavaPlugin {
     }
 
     private record CurveBinding(String curveName, double weight) { }
+
+    private void scheduleDecayTask() {
+        if (decayTask != null) {
+            decayTask.cancel();
+        }
+        decayTask = getServer().getScheduler()
+                .runTaskTimer(
+                        this,
+                        () -> {
+                            if (stateManager != null) {
+                                stateManager.decayAll();
+                            }
+                        },
+                        decayIntervalTicks,
+                        decayIntervalTicks
+                );
+    }
 
     private void tickOnlinePlaytime() {
         if (stateManager == null) return;

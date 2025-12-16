@@ -4,6 +4,10 @@ restThresholdMillis: 600000
 # How much playtime tracking X to add when they return after resting
 restBonus: 10.0
 
+decay:
+  # How often to run decay application in seconds. Per-second decay rates are applied based on elapsed time.
+  intervalSeconds: 10
+
 playtimeTracking:
   incrementPerSecond: 0.0167
 

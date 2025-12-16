@@ -119,6 +119,35 @@ public class CurvaturePlugin extends JavaPlugin {
                             c.getDouble("params.c")
                     );
                     break;
+                case "sampled":
+                    SampledCurve.Interpolation mode;
+                    String interp = c.getString("interpolate", "linear").toUpperCase();
+                    try {
+                        mode = SampledCurve.Interpolation.valueOf(interp);
+                    } catch (IllegalArgumentException ex) {
+                        getLogger().warning("Invalid interpolation '" + interp + "' for curve " + name + ", defaulting to LINEAR");
+                        mode = SampledCurve.Interpolation.LINEAR;
+                    }
+                    java.util.List<SampledCurve.Point> pts = new java.util.ArrayList<>();
+                    for (java.util.Map<?, ?> m : c.getMapList("points")) {
+                        if (m == null) continue;
+                        Object ox = m.get("x");
+                        Object oy = m.get("y");
+                        Double px = ox instanceof Number ? ((Number) ox).doubleValue() : null;
+                        Double py = oy instanceof Number ? ((Number) oy).doubleValue() : null;
+                        SampledCurve.Point p = SampledCurve.Point.of(px, py);
+                        if (p == null) {
+                            getLogger().warning("Skipping invalid point in curve " + name + ": " + m);
+                            continue;
+                        }
+                        pts.add(p);
+                    }
+                    if (pts.size() < 2) {
+                        getLogger().warning("Curve " + name + " has fewer than 2 points; skipping.");
+                        continue;
+                    }
+                    base = new SampledCurve(pts, mode);
+                    break;
                 default:
                     continue;
             }

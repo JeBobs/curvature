@@ -1,4 +1,7 @@
+# How long a player must be offline (ms) before earning a rest bonus on next join
 restThresholdMillis: 600000
+
+# How much playtime tracking X to add when they return after resting
 restBonus: 10.0
 
 playtimeTracking:
@@ -11,7 +14,7 @@ movement:
   maxIncrementPerMove: 1.0
 
 curves:
-  playtime:
+  polynomial_example:
     type: polynomial
     params:
       a: -0.0005
@@ -21,7 +24,7 @@ curves:
       minY: 0.85
       maxY: 1.5
     decayPerMinute: 0.35
-  movement:
+  logistic_example:
     type: logistic
     params:
       L: 1.2
@@ -31,7 +34,7 @@ curves:
       minY: 0.7
       maxY: 1.2
     decayPerMinute: 2.5
-  kills:
+  exponential_example:
     type: exponential
     params:
       base: 1.05
@@ -39,3 +42,16 @@ curves:
       minY: 0.9
       maxY: 1.6
     decayPerMinute: 0.65
+  sampled_example:
+    type: sampled
+    interpolate: linear # linear, step, smooth
+    points:
+      - { x: 0, y: 0.6 }
+      - { x: 5, y: 0.95 }
+      - { x: 15, y: 1.15 }
+      - { x: 30, y: 1.05 }
+      - { x: 60, y: 0.9 }
+    limits:
+      minY: 0.5
+      maxY: 1.2
+    decayPerMinute: 2.5

@@ -73,8 +73,8 @@ public class PlayerListeners implements Listener {
         }
 
         // optionally ignore vehicle or flying movement
-        boolean ignoreFlying = plugin.getConfig().getBoolean("movement.ignoreWhileFlying", true);
-        boolean ignoreInVehicle = plugin.getConfig().getBoolean("movement.ignoreInVehicle", true);
+        boolean ignoreFlying = plugin.getConfig().getBoolean("movementTracking.ignoreWhileFlying", true);
+        boolean ignoreInVehicle = plugin.getConfig().getBoolean("movementTracking.ignoreInVehicle", true);
         if ((ignoreFlying && (p.isFlying() || p.isGliding()))
                 || (ignoreInVehicle && p.getVehicle() != null)) {
             return;
@@ -86,8 +86,8 @@ public class PlayerListeners implements Listener {
         double distance = from.distance(to);
 
         // clamp per-move increment
-        double minInc = plugin.getConfig().getDouble("movement.minIncrementPerMove", 0.1);
-        double maxInc = plugin.getConfig().getDouble("movement.maxIncrementPerMove", 1.0);
+        double minInc = plugin.getConfig().getDouble("movementTracking.minIncrementPerMove", 0.1);
+        double maxInc = plugin.getConfig().getDouble("movementTracking.maxIncrementPerMove", 1.0);
         double inc = Math.max(minInc, Math.min(distance, maxInc));
 
         try {

@@ -17,9 +17,9 @@ curves:
   polynomial_example:
     type: polynomial
     params:
-      a: -0.0005
-      b: 0.03
-      c: 0.89
+      a: -0.0005        # quadratic coefficient
+      b: 0.03           # linear coefficient
+      c: 0.89           # constant term (starting multiplier)
     limits:
       minY: 0.85
       maxY: 1.5
@@ -27,9 +27,9 @@ curves:
   logistic_example:
     type: logistic
     params:
-      L: 1.2
-      k: 0.25
-      x0: 10.0
+      L: 1.2            # maximum multiplier plateau
+      k: 0.25           # steepness
+      x0: 10.0          # inflection point
     limits:
       minY: 0.7
       maxY: 1.2
@@ -37,7 +37,7 @@ curves:
   exponential_example:
     type: exponential
     params:
-      base: 1.05
+      base: 1.05        # Y = base^X
     limits:
       minY: 0.9
       maxY: 1.6

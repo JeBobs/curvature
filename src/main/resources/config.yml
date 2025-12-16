@@ -1,0 +1,41 @@
+restThresholdMillis: 600000
+restBonus: 10.0
+
+playtimeTracking:
+  incrementPerSecond: 0.0167
+
+movement:
+  ignoreWhileFlying: true
+  ignoreInVehicle: true
+  minIncrementPerMove: 0.1
+  maxIncrementPerMove: 1.0
+
+curves:
+  playtime:
+    type: polynomial
+    params:
+      a: -0.0005
+      b: 0.03
+      c: 0.89
+    limits:
+      minY: 0.85
+      maxY: 1.5
+    decayPerMinute: 0.35
+  movement:
+    type: logistic
+    params:
+      L: 1.2
+      k: 0.25
+      x0: 10.0
+    limits:
+      minY: 0.7
+      maxY: 1.2
+    decayPerMinute: 2.5
+  kills:
+    type: exponential
+    params:
+      base: 1.05
+    limits:
+      minY: 0.9
+      maxY: 1.6
+    decayPerMinute: 0.65

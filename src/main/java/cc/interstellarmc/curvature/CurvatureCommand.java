@@ -1,0 +1,95 @@
+package cc.interstellarmc.curvature;
+
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+
+public class CurvatureCommand implements CommandExecutor {
+    private final CurvaturePlugin plugin;
+
+    public CurvatureCommand(CurvaturePlugin plugin) {
+        this.plugin = plugin;
+        plugin.getCommand("curvature").setExecutor(this);
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        if (args.length == 0) {
+            sender.sendMessage(ChatColor.YELLOW + "Usage: /curvature reload | info <player> [curve]");
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("reload")) {
+            if (!sender.hasPermission("curvature.reload")) {
+                sender.sendMessage(ChatColor.RED + "You lack permission.");
+                return true;
+            }
+            plugin.reloadPluginConfig();
+            sender.sendMessage(ChatColor.GREEN + "Curvature config reloaded.");
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("info")) {
+            if (!sender.hasPermission("curvature.info")) {
+                sender.sendMessage(ChatColor.RED + "You lack permission.");
+                return true;
+            }
+            if (args.length < 2) {
+                sender.sendMessage(ChatColor.RED + "Usage: /curvature info <player> [curve]");
+                return true;
+            }
+            Player target = Bukkit.getPlayer(args[1]);
+            if (target == null) {
+                sender.sendMessage(ChatColor.RED + "Player not online.");
+                return true;
+            }
+            try {
+                PlayerState state = plugin.getStateManager().getWithDecay(target.getUniqueId());
+                if (args.length == 2) {
+                    sender.sendMessage(ChatColor.YELLOW + "-- Curvature Info for " + target.getName() + " --");
+                    for (String name : plugin.getCurves().keySet()) {
+                        ICurve c = plugin.getCurves().get(name);
+                        double x = state.getX(name);
+                        double y = c.apply(x);
+                        sender.sendMessage(ChatColor.AQUA + name + ": " + ChatColor.WHITE + String.format("X=%.2f, Y=%.2f", x, y));
+                    }
+                } else {
+                    String curve = args[2];
+                    ICurve c = plugin.getCurves().get(curve);
+                    if (c == null) {
+                        sender.sendMessage(ChatColor.RED + "Unknown curve: " + curve);
+                        return true;
+                    }
+                    double x = state.getX(curve);
+                    double y = c.apply(x);
+                    sender.sendMessage(ChatColor.YELLOW + curve + " for " + target.getName() + ": " +
+                            ChatColor.WHITE + String.format("X=%.2f, Y=%.2f", x, y));
+                }
+            } catch (Exception e) {
+                sender.sendMessage(ChatColor.RED + "Error fetching data.");
+            }
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("testinc")) {
+            Player target = args.length > 1 ? Bukkit.getPlayer(args[1]) : (sender instanceof Player ? (Player)sender : null);
+            if (target == null) {
+                sender.sendMessage(ChatColor.RED + "Target player required.");
+                return true;
+            }
+            try {
+                PlayerState state = plugin.getStateManager().getWithDecay(target.getUniqueId());
+                state.setX("movement", state.getX("movement") + 10);
+                sender.sendMessage(ChatColor.GREEN + "Manually added +10 to movement X.");
+            } catch (Exception e) {
+                sender.sendMessage(ChatColor.RED + "Error.");
+                e.printStackTrace();
+            }
+            return true;
+        }
+
+        sender.sendMessage(ChatColor.RED + "Unknown subcommand.");
+        return true;
+
+    }
+}

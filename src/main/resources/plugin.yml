@@ -1,0 +1,21 @@
+name: Curvature
+main: cc.interstellarmc.curvature.CurvaturePlugin
+version: 1.0
+api-version: 1.21
+depend:
+  - PlaceholderAPI
+commands:
+  curvature:
+    description: Curvature plugin commands
+    usage: /<command> <reload|info> [player] [curve]
+    permission: curvature.use
+permissions:
+  curvature.use:
+    description: Allows using the /curvature command
+    default: true
+  curvature.reload:
+    description: Allows reloading Curvature config
+    default: op
+  curvature.info:
+    description: Allows viewing player curve info
+    default: true

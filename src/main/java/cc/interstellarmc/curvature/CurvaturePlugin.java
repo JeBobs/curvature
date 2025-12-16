@@ -18,6 +18,7 @@ public class CurvaturePlugin extends JavaPlugin {
     private StateManager stateManager;
     private final Map<String, ICurve> curves = new HashMap<>();
     private final Map<String, Double> decayRatesPerSecond = new HashMap<>();
+    private final Map<String, java.util.List<CurveBinding>> inputBindings = new HashMap<>();
     private double playtimeIncrementPerSecond = 1.0 / 60.0;
 
     @Override
@@ -29,6 +30,7 @@ public class CurvaturePlugin extends JavaPlugin {
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+        loadBindings();
 
         try {
             conn = DriverManager.getConnection("jdbc:sqlite:" + getDataFolder() + "/income.db");
@@ -80,6 +82,7 @@ public class CurvaturePlugin extends JavaPlugin {
     void reloadPluginConfig() {
         reloadConfig();
         loadCurves();
+        loadBindings();
         if (stateManager != null) {
             stateManager.updateDecayRates(decayRatesPerSecond);
         }
@@ -165,14 +168,60 @@ public class CurvaturePlugin extends JavaPlugin {
         }
     }
 
+    private void loadBindings() {
+        inputBindings.clear();
+        ConfigurationSection inputs = getConfig().getConfigurationSection("inputs");
+        if (inputs != null) {
+            for (String metric : inputs.getKeys(false)) {
+                ConfigurationSection metricSec = inputs.getConfigurationSection(metric);
+                if (metricSec == null) continue;
+                java.util.List<Map<?, ?>> targets = metricSec.getMapList("targets");
+                java.util.List<CurveBinding> bindings = new java.util.ArrayList<>();
+                for (Map<?, ?> t : targets) {
+                    String curveName = t.get("curve") != null ? t.get("curve").toString() : null;
+                    if (curveName == null || !curves.containsKey(curveName)) {
+                        getLogger().warning("Skipping input target for metric '" + metric + "' due to missing or unknown curve: " + curveName);
+                        continue;
+                    }
+                    double weight = 1.0;
+                    Object w = t.get("weight");
+                    if (w instanceof Number) {
+                        weight = ((Number) w).doubleValue();
+                    }
+                    bindings.add(new CurveBinding(curveName, weight));
+                }
+                if (!bindings.isEmpty()) {
+                    inputBindings.put(metric, bindings);
+                }
+            }
+        }
+        // fallback defaults: bind metric to curve of same name if not configured
+        for (String curveName : curves.keySet()) {
+            if (!inputBindings.containsKey(curveName)) {
+                inputBindings.put(curveName, java.util.Collections.singletonList(new CurveBinding(curveName, 1.0)));
+            }
+        }
+    }
+
+    public void applyInput(String metric, double amount, java.util.UUID playerId) throws SQLException {
+        java.util.List<CurveBinding> bindings = inputBindings.get(metric);
+        if (bindings == null || bindings.isEmpty()) return;
+        PlayerState state = stateManager.getWithDecay(playerId);
+        for (CurveBinding b : bindings) {
+            double current = state.getX(b.curveName());
+            state.setX(b.curveName(), current + amount * b.weight());
+        }
+    }
+
+    private record CurveBinding(String curveName, double weight) { }
+
     private void tickOnlinePlaytime() {
         if (stateManager == null) return;
         double inc = playtimeIncrementPerSecond;
         if (inc <= 0) return;
         for (Player player : getServer().getOnlinePlayers()) {
             try {
-                PlayerState state = stateManager.getWithDecay(player.getUniqueId());
-                state.setX("playtime", state.getX("playtime") + inc);
+                applyInput("playtime", inc, player.getUniqueId());
             } catch (SQLException e) {
                 getLogger().warning("Failed to tick playtime for " + player.getName() + ": " + e.getMessage());
             }

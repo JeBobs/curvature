@@ -7,7 +7,7 @@ restBonus: 10.0
 playtimeTracking:
   incrementPerSecond: 0.0167
 
-movement:
+movementTracking:
   ignoreWhileFlying: true
   ignoreInVehicle: true
   minIncrementPerMove: 0.1
@@ -55,3 +55,18 @@ curves:
       minY: 0.5
       maxY: 1.2
     decayPerMinute: 2.5
+
+# Map input metrics to one or more curves.
+# If a metric is omitted here but a curve with the same name exists,
+# it will be auto-bound with weight 1.0.
+inputs:
+  playtime:
+    targets:
+      - { curve: polynomial_example, weight: 1.0 }
+  movement:
+    targets:
+      - { curve: logistic_example, weight: 1.0 }
+      - { curve: sampled_example,  weight: 1.0 }
+  kills:
+    targets:
+      - { curve: exponential_example, weight: 1.0 }

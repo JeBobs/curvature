@@ -31,7 +31,7 @@ public class PlayerListeners implements Listener {
             long threshold = plugin.getConfig().getLong("restThresholdMillis", 600000);
             if (offline > threshold) {
                 double bonus = plugin.getConfig().getDouble("restBonus", 10.0);
-                state.setX("playtime", state.getX("playtime") + bonus);
+                plugin.applyInput("playtime", bonus, p.getUniqueId());
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -55,8 +55,7 @@ public class PlayerListeners implements Listener {
         if (!(event.getEntity().getKiller() instanceof Player)) return;
         Player killer = event.getEntity().getKiller();
         try {
-            PlayerState state = stateManager.getWithDecay(killer.getUniqueId());
-            state.setX("kills", state.getX("kills") + 1);
+            plugin.applyInput("kills", 1.0, killer.getUniqueId());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -91,8 +90,7 @@ public class PlayerListeners implements Listener {
         double inc = Math.max(minInc, Math.min(distance, maxInc));
 
         try {
-            PlayerState state = stateManager.getWithDecay(p.getUniqueId());
-            state.setX("movement", state.getX("movement") + inc);
+            plugin.applyInput("movement", inc, p.getUniqueId());
         } catch (SQLException e) {
             e.printStackTrace();
         }

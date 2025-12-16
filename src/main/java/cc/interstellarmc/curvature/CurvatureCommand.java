@@ -86,9 +86,8 @@ public class CurvatureCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
             try {
-                PlayerState state = plugin.getStateManager().getWithDecay(target.getUniqueId());
-                state.setX("movement", state.getX("movement") + 10);
-                sender.sendMessage(ChatColor.GREEN + "Manually added +10 to movement X.");
+                plugin.applyInput("movement", 10.0, target.getUniqueId());
+                sender.sendMessage(ChatColor.GREEN + "Manually added +10 movement input.");
             } catch (Exception e) {
                 sender.sendMessage(ChatColor.RED + "Error.");
                 e.printStackTrace();

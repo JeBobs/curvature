@@ -5,14 +5,22 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
-public class CurvatureCommand implements CommandExecutor {
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+
+public class CurvatureCommand implements CommandExecutor, TabCompleter {
     private final CurvaturePlugin plugin;
 
     public CurvatureCommand(CurvaturePlugin plugin) {
         this.plugin = plugin;
         plugin.getCommand("curvature").setExecutor(this);
+        plugin.getCommand("curvature").setTabCompleter(this);
     }
 
     @Override
@@ -130,5 +138,40 @@ public class CurvatureCommand implements CommandExecutor {
         sender.sendMessage(ChatColor.RED + "Unknown subcommand.");
         return true;
 
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (!command.getName().equalsIgnoreCase("curvature")) return Collections.emptyList();
+        if (args.length == 1) {
+            List<String> base = new ArrayList<>();
+            if (sender.hasPermission("curvature.reload")) base.add("reload");
+            if (sender.hasPermission("curvature.info")) base.add("info");
+            if (sender.hasPermission("curvature.setx")) base.add("setx");
+            if (sender.hasPermission("curvature.use")) base.add("testinc");
+            return filter(base, args[0]);
+        }
+        if (args.length == 2) {
+            String sub = args[0].toLowerCase(Locale.ROOT);
+            if (sub.equals("info") || sub.equals("testinc") || sub.equals("setx")) {
+                return filter(
+                        Bukkit.getOnlinePlayers().stream().map(Player::getName).collect(Collectors.toList()),
+                        args[1]);
+            }
+        }
+        if (args.length == 3) {
+            String sub = args[0].toLowerCase(Locale.ROOT);
+            if (sub.equals("info") || sub.equals("setx")) {
+                return filter(new ArrayList<>(plugin.getCurves().keySet()), args[2]);
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    private List<String> filter(List<String> options, String token) {
+        String lower = token.toLowerCase(Locale.ROOT);
+        return options.stream()
+                .filter(opt -> opt.toLowerCase(Locale.ROOT).startsWith(lower))
+                .collect(Collectors.toList());
     }
 }

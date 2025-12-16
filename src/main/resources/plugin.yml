@@ -7,7 +7,7 @@ depend:
 commands:
   curvature:
     description: Curvature plugin commands
-    usage: /<command> <reload|info> [player] [curve]
+    usage: /<command> <reload|info|setx> [player] [curve] [value]
     permission: curvature.use
 permissions:
   curvature.use:
@@ -19,3 +19,6 @@ permissions:
   curvature.info:
     description: Allows viewing player curve info
     default: true
+  curvature.setx:
+    description: Allows setting a curve X value for a player
+    default: op

@@ -87,6 +87,45 @@ public class CurvatureCommand implements CommandExecutor {
             }
             return true;
         }
+        if (args[0].equalsIgnoreCase("setx")) {
+            if (!sender.hasPermission("curvature.setx")) {
+                sender.sendMessage(ChatColor.RED + "You lack permission.");
+                return true;
+            }
+            if (args.length < 4) {
+                sender.sendMessage(ChatColor.RED + "Usage: /curvature setx <player> <curve> <value>");
+                return true;
+            }
+            Player target = Bukkit.getPlayer(args[1]);
+            if (target == null) {
+                sender.sendMessage(ChatColor.RED + "Player not online.");
+                return true;
+            }
+            String curve = args[2];
+            ICurve c = plugin.getCurves().get(curve);
+            if (c == null) {
+                sender.sendMessage(ChatColor.RED + "Unknown curve: " + curve);
+                return true;
+            }
+            double value;
+            try {
+                value = Double.parseDouble(args[3]);
+            } catch (NumberFormatException e) {
+                sender.sendMessage(ChatColor.RED + "Value must be a number.");
+                return true;
+            }
+            try {
+                PlayerState state = plugin.getStateManager().getWithDecay(target.getUniqueId());
+                state.setX(curve, value);
+                double y = c.apply(value);
+                sender.sendMessage(ChatColor.GREEN + "Set " + curve + " X for " + target.getName() +
+                        " to " + String.format("%.2f (Y=%.2f)", value, y));
+            } catch (Exception e) {
+                sender.sendMessage(ChatColor.RED + "Error setting value.");
+                e.printStackTrace();
+            }
+            return true;
+        }
 
         sender.sendMessage(ChatColor.RED + "Unknown subcommand.");
         return true;
